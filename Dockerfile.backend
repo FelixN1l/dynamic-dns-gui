@@ -1,0 +1,14 @@
+# Dockerfile.backend
+FROM python:3.10-slim
+
+WORKDIR /app
+COPY backend/requirements.txt requirements.txt
+RUN pip install --upgrade pip && pip install -r requirements.txt
+COPY backend/ .
+
+# Copy supervisor configuration
+COPY backend/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+EXPOSE 5000
+
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
