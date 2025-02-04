@@ -8,18 +8,12 @@ class Domain(db.Model):
     zone_id = db.Column(db.String(64), nullable=False)
     cf_api_token = db.Column(db.String(128), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    # Relationship to managed IPs
+    ips = db.relationship('ManagedIP', backref='domain', cascade="all, delete-orphan", lazy=True)
 
-class DNSEntry(db.Model):
+class ManagedIP(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     domain_id = db.Column(db.Integer, db.ForeignKey('domain.id'), nullable=False)
-    record_type = db.Column(db.String(10), nullable=False)
-    name = db.Column(db.String(128), nullable=False)
-    content = db.Column(db.String(128), nullable=False)
-    ttl = db.Column(db.Integer, default=60)
-    proxied = db.Column(db.Boolean, default=False)
-    last_updated = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-# Run migrations using Flask-Migrate:
-# flask db init
-# flask db migrate -m "Initial migration"
-# flask db upgrade
+    ip_address = db.Column(db.String(45), nullable=False)  # supports IPv4 and IPv6
+    port = db.Column(db.Integer, default=80)  # port to perform health check
+    added_at = db.Column(db.DateTime, default=datetime.utcnow)

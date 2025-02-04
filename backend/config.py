@@ -12,3 +12,5 @@ class Config:
     CF_ZONE_ID = os.environ.get('CF_ZONE_ID')
     HEALTH_CHECK_INTERVAL = int(os.environ.get('HEALTH_CHECK_INTERVAL', 60))
     HEALTH_CHECK_TIMEOUT = int(os.environ.get('HEALTH_CHECK_TIMEOUT', 3))
+    # DNS record name to be managed (e.g., "a.example.com")
+    DNS_RECORD_NAME = os.environ.get('DNS_RECORD_NAME', 'a.example.com')
