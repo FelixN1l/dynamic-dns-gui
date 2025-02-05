@@ -11,9 +11,10 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s: %(mes
 
 def check_health(ip, port, sample_interval=5, total_duration=60, threshold=1000):
     """
-    Perform a TCP health check on ip:port by taking multiple samples.
-    Returns True if all connection attempts succeed and average latency <= threshold,
-    otherwise returns False.
+    Perform a TCP health check on ip:port.
+    Samples the connection latency every sample_interval seconds for total_duration seconds.
+    Returns True if all attempts succeed and the average latency is below threshold ms.
+    Returns False if any connection times out or the average latency exceeds threshold.
     """
     samples = total_duration // sample_interval
     latencies = []
@@ -25,9 +26,9 @@ def check_health(ip, port, sample_interval=5, total_duration=60, threshold=1000)
             end = time.perf_counter()
             latency_ms = (end - start) * 1000
             latencies.append(latency_ms)
-            logging.info(f"{ip}:{port} sample {i+1}/{samples} latency: {latency_ms:.2f} ms")
+            logging.info(f"{ip}:{port} sample {i+1}/{samples}: {latency_ms:.2f} ms")
         except Exception as e:
-            logging.error(f"Connection failed for {ip}:{port} at sample {i+1}/{samples}: {e}")
+            logging.error(f"Connection failed for {ip}:{port} on sample {i+1}/{samples}: {e}")
             return False
         time.sleep(sample_interval)
     avg_latency = sum(latencies) / len(latencies)
@@ -43,9 +44,8 @@ def update_dns_for_domain(domain):
     """
     cf_token = domain.cf_api_token
     zone_id = domain.zone_id
-    dns_record_name = Config.DNS_RECORD_NAME  # For simplicity; in production, you may store per-domain DNS names.
+    dns_record_name = Config.DNS_RECORD_NAME
     
-    # Retrieve current DNS records from Cloudflare
     headers = {
         "Authorization": f"Bearer {cf_token}",
         "Content-Type": "application/json"
@@ -97,7 +97,7 @@ def update_all_domains():
     with app.app_context():
         domains = Domain.query.all()
         for domain in domains:
-            logging.info(f"Updating DNS records for domain: {domain.domain_name}")
+            logging.info(f"Updating DNS for domain: {domain.domain_name}")
             update_dns_for_domain(domain)
 
 if __name__ == "__main__":

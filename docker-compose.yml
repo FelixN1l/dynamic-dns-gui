@@ -1,12 +1,42 @@
-version: '3.8'
+version: '3.3'
 services:
+  nginx-proxy:
+    image: jwilder/nginx-proxy
+    container_name: nginx-proxy
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+      - ./nginx/vhost.d:/etc/nginx/vhost.d
+      - ./nginx/html:/usr/share/nginx/html
+
+  letsencrypt:
+    image: jrcs/letsencrypt-nginx-proxy-companion
+    container_name: nginx-letsencrypt
+    restart: always
+    depends_on:
+      - nginx-proxy
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./nginx/certs:/etc/nginx/certs:rw
+      - ./nginx/vhost.d:/etc/nginx/vhost.d:rw
+      - ./nginx/html:/usr/share/nginx/html:rw
+
   backend:
     build:
       context: .
       dockerfile: Dockerfile.backend
     env_file: .env
-    ports:
-      - "5000:5000"
+    expose:
+      - "5000"
+    labels:
+      - "virtual.host=yourdomain.com"
+      - "virtual.port=5000"
+      - "letsencrypt.host=yourdomain.com"
+      - "letsencrypt.email=youremail@example.com"
     depends_on:
       - db
     restart: always
@@ -16,28 +46,23 @@ services:
       context: .
       dockerfile: Dockerfile.frontend
     env_file: frontend/.env
-    ports:
-      - "3000:80"
+    expose:
+      - "80"
+    labels:
+      - "virtual.host=yourdomain.com"
+      - "virtual.port=80"
+      - "letsencrypt.host=yourdomain.com"
+      - "letsencrypt.email=youremail@example.com"
     restart: always
 
   db:
     image: postgres:13
-    env_file: .env
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgrespassword
+      - POSTGRES_DB=dynamic_dns
     volumes:
       - pgdata:/var/lib/postgresql/data
-    restart: always
-
-  nginx:
-    image: nginx:latest
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/conf.d:/etc/nginx/conf.d
-      - ./nginx/ssl:/etc/nginx/ssl
-    depends_on:
-      - frontend
-      - backend
     restart: always
 
 volumes:
