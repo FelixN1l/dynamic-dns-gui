@@ -1,4 +1,4 @@
-version: '3.3'
+version: '3.8'
 services:
   nginx-proxy:
     image: jwilder/nginx-proxy
@@ -12,13 +12,19 @@ services:
       - ./nginx/certs:/etc/nginx/certs:ro
       - ./nginx/vhost.d:/etc/nginx/vhost.d
       - ./nginx/html:/usr/share/nginx/html
+    labels:
+      - "com.github.nginx-proxy.nginx=true"
 
-  letsencrypt:
+  nginx-letsencrypt:
     image: jrcs/letsencrypt-nginx-proxy-companion
     container_name: nginx-letsencrypt
     restart: always
     depends_on:
       - nginx-proxy
+    environment:
+      - NGINX_PROXY_CONTAINER=nginx-proxy
+      - ACME_CA_URI=https://acme-v02.api.letsencrypt.org/directory
+      - LETSENCRYPT_DEBUG=true
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./nginx/certs:/etc/nginx/certs:rw
@@ -32,11 +38,11 @@ services:
     env_file: .env
     expose:
       - "5000"
-    labels:
-      - "virtual.host=yourdomain.com"
-      - "virtual.port=5000"
-      - "letsencrypt.host=yourdomain.com"
-      - "letsencrypt.email=youremail@example.com"
+    environment:
+      - VIRTURAL_HOST=dns.milou.life
+      - VIRTURAL_PORT=5000
+      - LETSENCRYPT_HOST=dns.milou.life
+      - LETSENCRYPT_EMAIL=miloutin@protonmail.com
     depends_on:
       - db
     restart: always
@@ -48,11 +54,11 @@ services:
     env_file: frontend/.env
     expose:
       - "80"
-    labels:
-      - "virtual.host=yourdomain.com"
-      - "virtual.port=80"
-      - "letsencrypt.host=yourdomain.com"
-      - "letsencrypt.email=youremail@example.com"
+    environment:
+      - VIRTURAL_HOST=dns.milou.life 
+      - VIRTURAL_PORT=5000
+      - LETSENCRYPT_HOST=dns.milou.life 
+      - LETSENCRYPT_EMAIL=miloutin@protonmail.com
     restart: always
 
   db:
