@@ -2,6 +2,7 @@
 from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+from flask_cors import CORS
 from config import Config
 from datetime import datetime
 
@@ -9,7 +10,7 @@ app = Flask(__name__)
 app.config.from_object(Config)
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
-
+CORS(app)
 from models import Domain, ManagedIP
 
 @app.route('/api/domains', methods=['GET'])
